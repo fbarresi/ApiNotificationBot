@@ -1,5 +1,7 @@
+using System;
 using System.Reactive.Disposables;
 using System.Threading.Tasks;
+using Telegram.Bot.Types;
 
 namespace ApiNotificationBot.Interfaces
 {
@@ -9,5 +11,6 @@ namespace ApiNotificationBot.Interfaces
         Task<bool> Stop();
         Task<bool> GetStatus();
 		Task<bool> SendMessage(string chatId, string message);
+		IObservable<Message> Messages {get;}
 	}
 }
