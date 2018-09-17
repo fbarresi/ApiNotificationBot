@@ -7,7 +7,7 @@ namespace ApiNotificationBot.Models
     {
         public string Member { get; set; }
         public string ApiAddress { get; set; }
-        public TimeSpan Interval { get; set; }
-        public ApiMethods Method { get; set; }
+        public string Controller { get; set; }
+        public TimeSpan Period { get; set; }
     }
 }

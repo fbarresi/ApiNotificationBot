@@ -31,6 +31,12 @@ namespace ApiNotificationBot
 	        var botService = new BotService();
 			services.AddSingleton<IBotService>(botService);
 
+			var apiObserverService = new ApiObserverService();
+	        services.AddSingleton<IApiObserverService>(apiObserverService);
+
+			var dispatcher = new DispatcherService(botService, apiObserverService);
+	        services.AddSingleton<IDispatcherService>(dispatcher);
+
 	        // Register the Swagger generator, defining 1 or more Swagger documents
 	        services.AddSwaggerGen(c =>
 	        {

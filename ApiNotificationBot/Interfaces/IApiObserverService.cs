@@ -6,6 +6,6 @@ namespace ApiNotificationBot.Interfaces
 {
 	public interface IApiObserverService
 	{
-		Task<IObservable<string>> Start(string apiAddress, ApiMethods method, TimeSpan interval, string member);
+		IObservable<string> ObserveApi(string apiAddress, string controller, TimeSpan period, string member);
 	}
 }

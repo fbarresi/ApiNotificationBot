@@ -33,30 +33,6 @@ namespace ApiNotificationBot.Services{
             return user.Id != 0;
         }
 
-        private async Task<Unit> DispatchMessage(Message message)
-        {
-            var chatId = message.Chat.Id;
-            if(message.Type == MessageType.Text)
-            {
-                if(message.Text.StartsWith("//"))
-                {
-                    var inputs = message.Text.ToLowerInvariant().Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                    var command = inputs.FirstOrDefault();
-                    var parameter = inputs.LastOrDefault();
-                    var reply = "Unsupported command...";
-                    switch(command)
-                    {
-                        case "//topics":
-                            break;
-                        default:
-                            break;
-                    }
-                    await SendMessage(chatId.ToString(), reply);
-                }
-            }
-            return Unit.Default;
-        }
-
         public Task<bool> Stop()
         {
             botClient?.StopReceiving();

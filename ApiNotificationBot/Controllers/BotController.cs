@@ -39,8 +39,8 @@ namespace ApiNotificationBot.Controllers
 		/// <summary>
 		/// Stop the bot if running
 		/// </summary>
-        [HttpDelete("{id}")]
-        public Task Stop(int id)
+        [HttpDelete]
+        public Task Stop()
         {
 	        return botService.Stop();
         }

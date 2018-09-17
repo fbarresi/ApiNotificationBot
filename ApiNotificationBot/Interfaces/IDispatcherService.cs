@@ -6,7 +6,6 @@ namespace ApiNotificationBot.Interfaces
 {
 	public interface IDispatcherService
 	{
-		Task<bool> BroadcastMessage(string topic, string message);
 		void AddTopic(string topic, TopicSetting setting);
 		void RemoveTopic(string topic);
 		IEnumerable<string> GetTopics();
