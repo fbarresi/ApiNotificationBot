@@ -85,6 +85,7 @@ namespace ApiNotificationBot.Services
 			var apiSubscription = apiObserverService.ObserveApi(setting.ApiAddress, setting.Controller, setting.Period, setting.Member);
 			var subscription = apiSubscription
 				.SelectMany(message => BroadcastToSubscibers(topic, message))
+				.Retry()
 				.Subscribe();
 
 			topicSubscriptions[topic] = subscription;
