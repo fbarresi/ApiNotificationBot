@@ -47,14 +47,14 @@ namespace ApiNotificationBot.Services
 					var reply = "Unsupported command...";
 					switch (command)
 					{
-						case "//topics":
+						case "/topics":
 							reply = string.Join("\n", GetTopics());
 							break;
-						case "//subscribe":
+						case "/subscribe":
 							AddSubscriber(chatId.ToString(), parameter);
 							reply = $"Subscribed chat to {parameter}";
 							break;
-						case "//unsubscribe":
+						case "/unsubscribe":
 							RemoveSubscriber(chatId.ToString(), parameter);
 							reply = $"Unsubscribed chat from {parameter}";
 							break;
