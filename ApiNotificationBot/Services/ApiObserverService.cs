@@ -16,6 +16,7 @@ namespace ApiNotificationBot.Services
 			return Observable.Interval(period)
 					.SelectMany(_ => CallApi(apiAddress, controller, period))
 					.Select(result => SelectMemberFromResult(result, member))
+					.DistinctUntilChanged()
 					.Retry()
 				;
 		}
