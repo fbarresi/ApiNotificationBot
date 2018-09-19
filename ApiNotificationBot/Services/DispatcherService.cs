@@ -39,7 +39,7 @@ namespace ApiNotificationBot.Services
 			var chatId = message.Chat.Id;
 			if (message.Type == MessageType.Text)
 			{
-				if (message.Text.StartsWith("//"))
+				if (message.Text.StartsWith("/"))
 				{
 					var inputs = message.Text.ToLowerInvariant().Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 					var command = inputs.FirstOrDefault();
