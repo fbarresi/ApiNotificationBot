@@ -18,10 +18,12 @@ namespace ApiNotificationBot.Services
 					.Select(result => SelectMemberFromResult(result, member))
 					.DistinctUntilChanged()
 					.Retry()
+					.Publish()
+					.RefCount()
 				;
 		}
 
-		private async Task<JObject> CallApi(string apiAddress, string controller, TimeSpan period)
+        private async Task<JObject> CallApi(string apiAddress, string controller, TimeSpan period)
 		{
 			var client = new RestClient(apiAddress);
 

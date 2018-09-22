@@ -34,6 +34,14 @@ namespace ApiNotificationBot.Services
 			disposables.Add(messageSubcription);
 		}
 
+        private bool CheckMatching(string text, string matchingText)
+        {
+            if (string.IsNullOrEmpty(matchingText)) return true;
+            if (text.ToLowerInvariant().Contains(matchingText.ToLowerInvariant()))
+                return true;
+            return false;
+        }
+
 		private async Task<Unit> DispatchMessage(Message message)
 		{
 			var chatId = message.Chat.Id;
@@ -51,12 +59,16 @@ namespace ApiNotificationBot.Services
 							reply = string.Join("\n", GetTopics());
 							break;
 						case "/subscribe":
-							AddSubscriber(chatId.ToString(), parameter);
-							reply = $"Subscribed chat to {parameter}";
+							if(AddSubscriber(chatId.ToString(), parameter))
+								reply = $"Subscribed chat to {parameter}";
+							else
+                                reply = $"Topic '{parameter}' not found...";
 							break;
 						case "/unsubscribe":
-							RemoveSubscriber(chatId.ToString(), parameter);
-							reply = $"Unsubscribed chat from {parameter}";
+							if(RemoveSubscriber(chatId.ToString(), parameter))
+								reply = $"Unsubscribed chat from {parameter}";
+                            else
+                                reply = $"Topic '{parameter}' not found...";
 							break;
 						default:
 							break;
@@ -67,44 +79,66 @@ namespace ApiNotificationBot.Services
 			return Unit.Default;
 		}
 
-		private async Task<Unit> BroadcastToSubscibers(string topic, string message)
+		private async Task<Unit> BroadcastToSubscibers(string message, params string[] topics)
 		{
-			foreach (var chatId in topicSubscibers[topic])
+			foreach(var topic in topics)
 			{
-				await botService.SendMessage(chatId, $"{topic}: {message}");
+				foreach (var chatId in topicSubscibers[topic])
+				{
+					await botService.SendMessage(chatId, $"{topic}: {message}");
+				}
 			}
 			return Unit.Default;
 		}
 
 		public void AddTopic(string topic, TopicSetting setting)
 		{
-			if(topicSubscriptions.ContainsKey(topic)) topicSubscriptions[topic].Dispose();
-			List<string> subscribers;
-			if (topicSubscibers.ContainsKey(topic)) topicSubscibers.TryRemove(topic, out subscribers);
+			var topics = new Dictionary<string, string>();
+			topics[topic] = string.Empty;
+			if(setting.Subtopics != null)
+				foreach(var subtopic in setting.Subtopics)
+					topics[$"{topic}.{subtopic.Key}"] = subtopic.Value;
+					
+			RemoveTopics(topics.Keys.ToArray());
 
 			var apiSubscription = apiObserverService.ObserveApi(setting.ApiAddress, setting.Controller, setting.Period, setting.Member);
-			var subscription = apiSubscription
-				.SelectMany(message => BroadcastToSubscibers(topic, message))
-				.Retry()
-				.Subscribe();
 
-			topicSubscriptions[topic] = subscription;
-			topicSubscibers[topic] = new List<string>();
+            foreach (var t in topics)
+                AddTopicSubscription(apiSubscription, t.Key, t.Value);
+		}
+
+		private void AddTopicSubscription(IObservable<string> messages, string topic, string matchingText)
+		{
+            var subscription = messages
+				.Where(message => CheckMatching(message, matchingText))
+                .SelectMany(message => BroadcastToSubscibers(message, topic))
+                .Retry()
+                .Subscribe();
+
+            topicSubscriptions[topic] = subscription;
+            topicSubscibers[topic] = new List<string>();
+		}
+
+		private void RemoveTopics(params string[] topics)
+		{
+			foreach(var topic in topics)
+			{
+				IDisposable disposable;
+				List<string> subscribers;
+
+				if (topicSubscriptions.ContainsKey(topic))
+				{
+					topicSubscriptions[topic].Dispose();
+					topicSubscriptions.TryRemove(topic, out disposable);
+				}
+
+				if (topicSubscibers.ContainsKey(topic)) topicSubscibers.TryRemove(topic, out subscribers);
+			}
 		}
 
 		public void RemoveTopic(string topic)
 		{
-			IDisposable disposabe;
-			List<string> subscribers;
-
-			if (topicSubscriptions.ContainsKey(topic))
-			{
-				topicSubscriptions[topic].Dispose();
-				topicSubscriptions.TryRemove(topic, out disposabe);
-			}
-
-			if (topicSubscibers.ContainsKey(topic)) topicSubscibers.TryRemove(topic, out subscribers);
-
+			RemoveTopics(topic);
 		}
 
 		public IEnumerable<string> GetTopics()
@@ -112,29 +146,33 @@ namespace ApiNotificationBot.Services
 			return topicSubscriptions.Keys;
 		}
 
-		public void AddSubscriber(string chatId, string topic)
+		private bool AddSubscriber(string chatId, string topic)
 		{
 			if (topicSubscibers.ContainsKey(topic))
 			{
 				topicSubscibers[topic].Add(chatId);
 				topicSubscibers[topic] = topicSubscibers[topic].Distinct().ToList();
+				return true;
 			}
+			return false;
 		}
 
-		public void RemoveSubscriber(string chatId, string topic)
+		private bool RemoveSubscriber(string chatId, string topic)
 		{
 			if (topicSubscibers.ContainsKey(topic))
 			{
 				topicSubscibers[topic].RemoveAll(s => s.Equals(chatId));
+                return true;
 			}
+			return false;
 		}
 
 		public void Dispose()
 		{
 			disposables.Dispose();
-			foreach (var topic in topicSubscriptions.Keys)
+			foreach (var topic in topicSubscriptions)
 			{
-				topicSubscriptions[topic].Dispose();
+                topic.Value.Dispose();
 			}
 		}
 	}
