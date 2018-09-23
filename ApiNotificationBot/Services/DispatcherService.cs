@@ -124,21 +124,28 @@ namespace ApiNotificationBot.Services
 			foreach(var topic in topics)
 			{
 				IDisposable disposable;
-				List<string> subscribers;
-
 				if (topicSubscriptions.ContainsKey(topic))
 				{
 					topicSubscriptions[topic].Dispose();
 					topicSubscriptions.TryRemove(topic, out disposable);
 				}
-
-				if (topicSubscibers.ContainsKey(topic)) topicSubscibers.TryRemove(topic, out subscribers);
 			}
 		}
+
+        private void RemoveSubscriptions(params string[] topics)
+        {
+            foreach (var topic in topics)
+            {
+                List<string> subscribers;
+
+                if (topicSubscibers.ContainsKey(topic)) topicSubscibers.TryRemove(topic, out subscribers);
+            }
+        }
 
 		public void RemoveTopic(string topic)
 		{
 			RemoveTopics(topic);
+            RemoveSubscriptions(topic);
 		}
 
 		public IEnumerable<string> GetTopics()
